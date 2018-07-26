@@ -17,6 +17,9 @@
     </parent>
     <modules>
         <module>aa-helloworld</module>
+        <module>ba-webtemplet</module>
+        <module>bb-fastjson</module>
+        <module>bc-servletFilterListener</module>
     </modules>
 
     <dependencies>
