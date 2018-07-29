@@ -20,6 +20,9 @@
         <module>ba-webtemplet</module>
         <module>bb-fastjson</module>
         <module>bc-servletFilterListener</module>
+        <module>bd-interceptor</module>
+        <module>be-errPage</module>
+        <module>bf-FileUpDown</module>
     </modules>
 
     <dependencies>
@@ -28,6 +31,16 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!--添加AOP依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <!--添加WebSocket依赖-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
     </dependencies>
 

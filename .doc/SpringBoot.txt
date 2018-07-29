@@ -1,0 +1,589 @@
+八、配置 AOP 切面
+    8.1 添加依赖
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-aop</artifactId>
+    </dependency>
+    8.2 编写切面类
+    使用 @Component，@Aspect 标记到切面类上：
+    @Aspect
+    @Component
+    public class TimeAspect {
+
+        @Around("execution(* com.light.springboot.controller.FastJsonController..*(..))")
+        public Object method(ProceedingJoinPoint pjp) throws Throwable {
+
+            System.out.println("=====Aspect处理=======");
+            Object[] args = pjp.getArgs();
+            for (Object arg : args) {
+                System.out.println("参数为:" + arg);
+            }
+
+            long start = System.currentTimeMillis();
+
+            Object object = pjp.proceed();
+
+            System.out.println("Aspect 耗时:" + (System.currentTimeMillis() - start));
+
+            return object;
+        }
+    }
+ 九、错误处理
+    9.1 友好页面
+    非友好页面，修改 FastJsonController 类中的 test 方法：
+    @RestController
+    @RequestMapping("fastjson")
+    public class FastJsonController {
+
+        @RequestMapping("/test")
+        public User test() {
+            User user = new User();
+
+            user.setId(1);
+            user.setUsername("jack");
+            user.setPassword("jack123");
+            user.setBirthday(new Date());
+
+            // 模拟异常
+            int i = 1/0;
+
+            return user;
+        }
+    }
+
+    访问页面展示的内容
+
+    Whitelabel Error Page
+    This application has no explicit mapping for /error, so you are seeing this as a fallback.
+    Fri Jul 27 23:36:11 CST 2018
+    There was an unexpected error (type=Internal Server Error, status=500).
+    / by zero
+
+    在 src/main/resources 下创建 /public/error，在该目录下再创建一个名为 5xx.html 文件，该页面的内容就是当系统报错时返回给用户浏览的内容：
+    <!DOCTYPE html>
+    <html lang="zh">
+    <head>
+        <meta charset="UTF-8">
+        <title>系统错误</title>
+        <link href="/css/index.css" rel="stylesheet"/>
+    </head>
+    <body>
+        <div class="container">
+            <h2>系统内部错误</h2>
+        </div>
+    </body>
+    </html>
+
+    上边处理的 5xx 状态码的问题，接下来解决 404 状态码的问题。
+    当出现 404 的情况时，用户浏览的页面也不够友好，因此我们也需要自定义一个友好的页面给用户展示。
+    在 /public/error 目录下再创建一个名为 404.html 的文件：
+    <!DOCTYPE html>
+    <html lang="zh">
+    <head>
+        <meta charset="UTF-8">
+        <title>访问异常</title>
+        <link href="/css/index.css" rel="stylesheet"/>
+    </head>
+    <body>
+        <div class="container">
+            <h2>找不到页面</h2>
+        </div>
+    </body>
+    </html>
+
+    9.2 全局异常捕获
+    如果项目前后端是通过 JSON 进行数据通信，则当出现异常时可以常用如下方式处理异常信息。
+
+    编写一个类充当全局异常的处理类，需要使用 @ControllerAdvice 和 @ExceptionHandler 注解：
+    @ControllerAdvice
+    public class GlobalDefaultExceptionHandler {
+
+        /**
+         * 处理 Exception 类型的异常
+         * @param e
+         * @return
+         */
+        @ExceptionHandler(Exception.class)
+        @ResponseBody
+        public Map<String,Object> defaultExceptionHandler(Exception e) {
+
+            Map<String,Object> map = new HashMap<String,Object>();
+            map.put("code", 500);
+            map.put("msg", e.getMessage());
+            return map;
+        }
+    }
+
+    其中，方法名为任意名，入参一般使用 Exception 异常类，方法返回值可自定义。
+
+    我们还可以自定义异常，在全局异常的处理类中捕获和判断，从而对不同的异常做出不同的处理。
+
+
+十、文件上传和下载
+    10.1 添加依赖
+        <!-- 工具 -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.4</version>
+        </dependency>
+
+    10.2 实现
+        编写一个实体类，用于封装返回信息：
+            public class FileInfo {
+                private String path;
+                public FileInfo(String path) {
+                    this.path = path;
+                }
+                public String getPath() {
+                    return path;
+                }
+                public void setPath(String path) {
+                    this.path = path;
+                }
+            }
+
+        编写 Controller，用于处理文件上传下载：
+            @RestController
+            @RequestMapping("/file")
+            public class FileController {
+
+                private String path = "d:\\";
+
+                @PostMapping
+                public FileInfo upload(MultipartFile file) throws Exception {
+
+                    System.out.println(file.getName());
+                    System.out.println(file.getOriginalFilename());
+                    System.out.println(file.getSize());
+
+                    File localFile = new File(path, file.getOriginalFilename());
+
+                    file.transferTo(localFile);
+
+                    return new FileInfo(localFile.getAbsolutePath());
+                }
+
+                @GetMapping("/{id}")
+                public void download(@PathVariable String id, HttpServletRequest request, HttpServletResponse response) {
+                    try {
+                               InputStream inputStream = new FileInputStream(new File(path, id + ".jpg"));
+                               OutputStream outputStream = response.getOutputStream();
+
+                               response.setContentType("application/x-download");
+                               response.addHeader("Content-Disposition", "attachment;filename=" + id + ".jpg");
+
+                               IOUtils.copy(inputStream, outputStream);
+                           } catch (Exception e) {
+                               e.printStackTrace();
+                     }
+                }
+            }
+
+十一、CORS 支持
+    跨域问题解决
+    粗粒度控制：
+    方式一 实现WebMvcConfigurer 的Bean
+        @Configuration
+        public class WebConfig {
+
+            @Bean
+            public WebMvcConfigurer corsConfigurer() {
+                return new WebMvcConfigurerAdapter() {
+                  @Override
+                  public void addCorsMappings(CorsRegistry registry) {
+                      registry.addMapping("/fastjson/**")
+                              .allowedOrigins("http://localhost:8088");// 允许 8088 端口访问
+                  }
+                };
+            }
+        }
+
+     方式二 继承WebMvcConfigurerAdapter
+        @Configuration
+        public class WebConfig extends WebMvcConfigurerAdapter{
+
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/fastjson/**")
+                      .allowedOrigins("http://localhost:8088");// 允许 8088 端口访问
+            }
+        }
+
+
+      方式三 @CrossOrigin(origins="xx") 注解：
+
+        @RequestMapping("/test")
+        @CrossOrigin(origins="http://localhost:8088")
+        public User test() {
+            User user = new User();
+
+            user.setId(1);
+            user.setUsername("jack");
+            user.setPassword("jack123");
+            user.setBirthday(new Date());
+
+            return user;
+        }
+
+十二、整合 WebSocket
+    12.1 添加依赖
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+    12.2 实现方式
+        方式一：
+        该方式只适用于通过 jar 包直接运行项目的情况。
+        WebSocket 配置类：
+        @Configuration
+        public class WebSocketConfig {
+
+            @Bean
+            public ServerEndpointExporter serverEndpointExporter() {
+                return new ServerEndpointExporter();
+            }
+
+        }
+
+        WebSocket 处理类：
+        @ServerEndpoint(value = "/webSocketServer/{userName}")
+        @Component
+        public class WebSocketServer {
+
+            private static final Set<WebSocketServer> connections = new CopyOnWriteArraySet<>();
+
+            private String nickname;
+            private Session session;
+
+            private static String getDatetime(Date date) {
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                return format.format(date);
+            }
+
+            @OnOpen
+            public void start(@PathParam("userName") String userName, Session session) {
+                this.nickname = userName;
+                this.session = session;
+                connections.add(this);
+                String message = String.format("* %s %s", nickname, "加入聊天！");
+                broadcast(message);
+            }
+
+            @OnClose
+            public void end() {
+                connections.remove(this);
+                String message = String.format("* %s %s", nickname, "退出聊天！");
+                broadcast(message);
+            }
+
+            @OnMessage
+            public void pushMsg(String message) {
+                broadcast("【" + this.nickname + "】" + getDatetime(new Date()) + " : " + message);
+            }
+
+            @OnError
+            public void onError(Throwable t) throws Throwable {
+
+            }
+
+            private static void broadcast(String msg) {
+                // 广播形式发送消息
+                for (WebSocketServer client : connections) {
+                    try {
+                        synchronized (client) {
+                            client.session.getBasicRemote().sendText(msg);
+                        }
+                    } catch (IOException e) {
+                        connections.remove(client);
+                        try {
+                            client.session.close();
+                        } catch (IOException e1) {
+                            e.printStackTrace();
+                        }
+                        String message = String.format("* %s %s", client.nickname, "断开连接");
+                        broadcast(message);
+                    }
+                }
+            }
+        }
+
+        前端页面:
+        <!DOCTYPE html>
+        <html>
+
+        <head lang="zh">
+            <meta charset="UTF-8">
+            <link rel="stylesheet" href="css/bootstrap.min.css">
+            <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+            <script src="js/jquery-1.12.3.min.js"></script>
+            <script src="js/bootstrap.js"></script>
+            <style type="text/css">
+            #msg {
+                height: 400px;
+                overflow-y: auto;
+            }
+
+            #userName {
+                width: 200px;
+            }
+
+            #logout {
+                display: none;
+            }
+            </style>
+            <title>webSocket测试</title>
+        </head>
+
+        <body>
+            <div class="container">
+                <div class="page-header" id="tou">webSocket及时聊天Demo程序</div>
+                <p class="text-right" id="logout">
+                    <button class="btn btn-danger" id="logout-btn">退出</button>
+                </p>
+                <div class="well" id="msg"></div>
+                <div class="col-lg">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="发送信息..." id="message"> <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" id="send"
+                                disabled="disabled">发送</button>
+                        </span>
+                    </div>
+                    <div class="input-group">
+                        <input id="userName" type="text" class="form-control" name="userName" placeholder="输入您的用户名" />
+                        <button class="btn btn-default" type="button" id="connection-btn">建立连接</button>
+                    </div>
+                    <!-- /input-group -->
+                </div>
+                <!-- /.col-lg-6 -->
+            </div>
+            <!-- /.row -->
+            </div>
+            <script type="text/javascript">
+            $(function() {
+                var websocket;
+                $("#connection-btn").bind("click", function() {
+                    var userName = $("#userName").val();
+                    if (userName == null || userName == "") {
+                        alert("请输入您的用户名");
+                        return;
+                    }
+                    connection(userName);
+                });
+
+                function connection(userName) {
+                    var host = window.location.host;
+                    if ('WebSocket' in window) {
+                        websocket = new WebSocket("ws://" + host +
+                            "/webSocketServer/" + userName);
+                    } else if ('MozWebSocket' in window) {
+                        websocket = new MozWebSocket("ws://" + host +
+                            "/webSocketServer/" + userName);
+                    }
+                    websocket.onopen = function(evnt) {
+                        $("#tou").html("链接服务器成功!")
+                        $("#send").prop("disabled", "");
+                        $("#connection-btn").prop("disabled", "disabled");
+                        $("#logout").show();
+                    };
+                    websocket.onmessage = function(evnt) {
+                        $("#msg").html($("#msg").html() + "<br/>" + evnt.data);
+                    };
+                    websocket.onerror = function(evnt) {
+                        $("#tou").html("报错!")
+                    };
+                    websocket.onclose = function(evnt) {
+                        $("#tou").html("与服务器断开了链接!");
+                        $("#send").prop("disabled", "disabled");
+                        $("#connection-btn").prop("disabled", "");
+                        $("#logout").hide();
+                    }
+                }
+
+                function send() {
+                    if (websocket != null) {
+                        var $message = $("#message");
+                        var data = $message.val();
+                        if (data == null || data == "") {
+                            return;
+                        }
+                        websocket.send(data);
+                        $message.val("");
+                    } else {
+                        alert('未与服务器链接.');
+                    }
+                }
+
+                $('#send').bind('click', function() {
+                    send();
+                });
+
+                $(document).on("keypress", function(event) {
+                    if (event.keyCode == "13") {
+                        send();
+                    }
+                });
+
+                $("#logout-btn").on("click", function() {
+                    websocket.close(); //关闭TCP连接
+                });
+            });
+            </script>
+        </body>
+
+        </html>
+
+       如果使用该方式实现 WebSocket 功能并打包成 war 运行会报错：
+            javax.websocket.DeploymentException: Multiple Endpoints may not be deployed to the same path
+
+     方式二：
+        该方式适用于 jar 包方式运行和 war 方式运行。
+        WebSocket 配置类：
+        @Configuration
+        @EnableWebSocket
+        public class WebSocketConfig implements WebSocketConfigurer {
+            @Override
+            public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+                registry.addHandler(webSocketServer(), "/webSocketServer/*");
+            }
+
+            @Bean
+            public WebSocketHandler webSocketServer() {
+                return new WebSocketServer();
+            }
+        }
+
+        WebSocket 处理类：
+        public class WebSocketServer extends TextWebSocketHandler {
+
+            private static final Map<WebSocketSession, String> connections = new ConcurrentHashMap<>();
+
+            private static String getDatetime(Date date) {
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                return format.format(date);
+            }
+
+            /**
+             * 建立连接
+             */
+            @Override
+            public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+
+                String uri = session.getUri().toString();
+                String userName = uri.substring(uri.lastIndexOf("/") + 1);
+
+                String nickname = URLDecoder.decode(userName, "utf-8");
+
+                connections.put(session, nickname);
+                String message = String.format("* %s %s", nickname, "加入聊天！");
+
+                broadcast(new TextMessage(message));
+            }
+
+            /**
+             * 断开连接
+             */
+            @Override
+            public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+                String nickname = connections.remove(session);
+                String message = String.format("* %s %s", nickname, "退出聊天！");
+
+                broadcast(new TextMessage(message));
+            }
+
+            /**
+             * 处理消息
+             */
+            @Override
+            protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+                String msg = "【" + connections.get(session) + "】" + getDatetime(new Date()) + " : " + message.getPayload();
+
+                broadcast(new TextMessage(msg));
+            }
+
+            private static void broadcast(TextMessage msg) {
+                // 广播形式发送消息
+                for (WebSocketSession session : connections.keySet()) {
+                    try {
+                        synchronized (session) {
+                            session.sendMessage(msg);
+                        }
+                    } catch (Exception e) {
+                        connections.remove(session);
+                        try {
+                            session.close();
+                        } catch (Exception e2) {
+                            e2.printStackTrace();
+                        }
+                        String message = String.format("* %s %s", connections.get(session), "断开连接");
+                        broadcast(new TextMessage(message));
+                    }
+                }
+            }
+        }
+
+十三、整合 Swagger2
+    13.1 添加依赖
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+
+    13.2 配置
+        重新创建一个配置类，如下：
+        @Configuration
+        @EnableSwagger2
+        public class Swagger2Configuration {
+
+            @Bean
+            public Docket accessToken() {
+                return new Docket(DocumentationType.SWAGGER_2)
+                        .groupName("api")// 定义组
+                        .select() // 选择那些路径和 api 会生成 document
+                        .apis(RequestHandlerSelectors.basePackage("com.light.springboot.controller")) // 拦截的包路径
+                        .paths(PathSelectors.regex("/*/.*"))// 拦截的接口路径
+                        .build() // 创建
+                        .apiInfo(apiInfo()); // 配置说明
+            }
+
+            private ApiInfo apiInfo() {
+                return new ApiInfoBuilder()//
+                        .title("Spring Boot 之 Web 篇")// 标题
+                        .description("spring boot Web 相关内容")// 描述
+                        .termsOfServiceUrl("http://www.extlight.com")//
+                        .contact(new Contact("moonlightL", "http://www.extlight.com", "445847261@qq.com"))// 联系
+                        .version("1.0")// 版本
+                        .build();
+            }
+        }
+
+     为了能更好的说明接口信息，我们还可以在 Controller 类上使用 Swagger2 相关注解说明信息。
+     我们以 FastJsonController 为例：
+        @Api(value = "FastJson测试", tags = { "测试接口" })
+        @RestController
+        @RequestMapping("fastjson")
+        public class FastJsonController {
+
+            @ApiOperation("获取用户信息")
+            @ApiImplicitParam(name = "name", value = "用户名", dataType = "string", paramType = "query")
+            @GetMapping("/test/{name}")
+            public User test(@PathVariable("name") String name) {
+                User user = new User();
+
+                user.setId(1);
+                user.setUsername(name);
+                user.setPassword("jack123");
+                user.setBirthday(new Date());
+
+                return user;
+            }
+        }
+
+      注意，上边的方法是用 @GetMapping 注解，如果只是使用 @RequestMapping 注解，不配置 method 属性，那么 API 文档会生成 7 种请求方式。

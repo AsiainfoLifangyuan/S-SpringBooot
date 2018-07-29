@@ -8,7 +8,6 @@ import java.util.Map;
 @Controller
 @RequestMapping("/freeMarker")
 public class FreeMarkerController {
-
     @RequestMapping("/hello")
     public String helloWorld(Map<String,Object> map){
         map.put("msn","hello FreeMarker");
