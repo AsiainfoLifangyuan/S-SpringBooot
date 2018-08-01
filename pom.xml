@@ -24,6 +24,8 @@
         <module>be-errPage</module>
         <module>bf-FileUpDown</module>
         <module>ca-dataTodb</module>
+        <module>cb-mybatis-a</module>
+        <module>cb-mybatis-b</module>
     </modules>
 
     <dependencies>
