@@ -1,29 +1,26 @@
 package com.spring.boot;
 
 
-import com.spring.boot.dao.PopSprSectionDao;
+import com.spring.boot.bean.SubProdDeluser;
+import com.spring.boot.repository.SubProdDeluserRep;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.List;
-import java.util.Map;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
-public class PopSprSectionDaoTest {
-
+public class SubProdDelUserRepTest {
 
     @Autowired
-    private PopSprSectionDao dao;
+    private SubProdDeluserRep dao;
 
     @Test
     public void test(){
+        SubProdDeluser bean = dao.findOne(5645);
 
-        List<Map<String,Object>> list = dao.getPopSprSection(5645);
-        System.out.println("查询的结果是-----------------------");
-        System.out.println(list.toString());
+        System.out.println(bean.getId());
     }
 }
