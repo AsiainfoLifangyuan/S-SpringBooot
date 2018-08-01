@@ -17,10 +17,11 @@ public class SubProdDelUserRepTest {
     @Autowired
     private SubProdDeluserRep dao;
 
+
     @Test
     public void test(){
         SubProdDeluser bean = dao.findOne(5645);
 
-        System.out.println(bean.getId());
+        System.out.println( "查询结果是"+bean.getId());
     }
 }
