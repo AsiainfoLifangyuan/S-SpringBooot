@@ -13,7 +13,7 @@ import java.util.Map;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
-public class MybatisATest {
+public class MybatisBTest {
 
 
     @Autowired
@@ -22,6 +22,6 @@ public class MybatisATest {
     @Test
     public void getSectionAll(){
         List<Map<String,Object>> list = mapper.getAllSection();
-        System.out.println("结果为"+list);
+        System.out.println("结果为"+list.size());
     }
 }

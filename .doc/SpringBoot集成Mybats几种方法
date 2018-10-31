@@ -1,4 +1,57 @@
 https://www.imooc.com/article/15406
-https://blog.csdn.net/hello_it_/article/details/78662342
+https://blog.csdn.net/hello_it_/article/details/78662342(垃圾不懂)
 https://www.jianshu.com/p/6291068f130c
+https://my.oschina.net/bianxin/blog/1602958
+
+https://blog.csdn.net/u010066934/article/details/53887410(使用spring-mybatis整合包)
+    注入mapper接口代理
+        @Configuration  //刷新配置信息 boot会自动注入datasource，但mapper的路径需要手动注入
+        @EnableTransactionManagement // 启注解事务管理，等同于xml配置方式的 <tx:annotation-driven />
+        public class MybatisConfig implements TransactionManagementConfigurer {
+            @Autowired
+            private DataSource dataSource;
+
+            @Bean(name = "sqlSessionFactory")
+            public SqlSessionFactory sqlSessionFactory() throws Exception {
+                SqlSessionFactoryBean bean =new SqlSessionFactoryBean();
+                bean.setDataSource(dataSource);
+                bean.setMapperLocations(new PathMatchingResourcePatternResolver().
+                        getResources("classpath:com/common/dao/mapper/UserMapper.xml"));
+                return bean.getObject();
+            }
+            @Bean
+            public SqlSessionTemplate sqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
+                return new SqlSessionTemplate(sqlSessionFactory);
+            }
+
+            @Override
+            public PlatformTransactionManager annotationDrivenTransactionManager() {
+                return new DataSourceTransactionManager(dataSource);
+            }
+        }
+
+    MybatisMapperScannerConfig 自动扫描配置
+        @Configuration
+        public class MybatisMapperScannerConfig {
+            @Bean
+            public MapperScannerConfigurer mapperScannerConfigurer() {
+                MapperScannerConfigurer scanner = new MapperScannerConfigurer();
+                scanner.setSqlSessionFactoryBeanName("sqlSessionFactory");  //set 手动配置的sqlSessionFactory
+                scanner.setBasePackage("com.common.dao");
+                return scanner;
+            }
+        }
+
+
+     二、常见问题
+     SpringBoot扫描包问题
+        报错信息：Consider defining a bean of type in your configuration
+
+        方法一：
+
+        使用注解 @ComponentScan(value=”com.common”)，其中，com.common为包路径。
+
+        方法二：
+        将启动类Application放在上一级包中。
+
 https://my.oschina.net/bianxin/blog/1602958

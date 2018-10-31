@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/aa-helloworld" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ba-webtemplet" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/bb-fastjson" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/bc-servletFilterListener" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/bd-interceptor" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/be-errPage" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/bf-FileUpDown" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ca-dataTodb" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cb-mybatis-a" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cb-mybatis-b" charset="UTF-8" />
+  </component>
+</project>

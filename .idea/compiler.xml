@@ -7,6 +7,15 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="aa-helloworld" />
+        <module name="ba-webtemplet" />
+        <module name="bb-fastjson" />
+        <module name="bc-servletFilterListener" />
+        <module name="bd-interceptor" />
+        <module name="be-errPage" />
+        <module name="bf-FileUpDown" />
+        <module name="ca-dataTodb" />
+        <module name="cb-mybatis-a" />
+        <module name="cb-mybatis-b" />
       </profile>
     </annotationProcessing>
   </component>

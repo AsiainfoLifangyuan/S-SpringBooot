@@ -24,7 +24,7 @@ public class MyBatisConfiguration {
         sqlSessionFactoryBean.setDataSource(dataSource);
 
         // 设置mybatis的主配置文件
-        sqlSessionFactoryBean.setConfigLocation(new ClassPathResource("mybatis/mybatis-config.xml"));
+       /* sqlSessionFactoryBean.setConfigLocation(new ClassPathResource("mybatis/mybatis-config.xml"));*/
 
         // 设置mapper映射文件
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -46,7 +46,7 @@ public class MyBatisConfiguration {
     @ConditionalOnBean(SqlSessionFactoryBean.class) // 当 SqlSessionFactoryBean 实例存在时创建对象
     public MapperScannerConfigurer mapperScannerConfigurer() {
         MapperScannerConfigurer mapperScannerConfigurer = new MapperScannerConfigurer();
-        mapperScannerConfigurer.setBasePackage("com.light.springboot.mapper");
+        mapperScannerConfigurer.setBasePackage("boot.mapper");
         return mapperScannerConfigurer;
     }
 }
